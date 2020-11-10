@@ -8,7 +8,7 @@
 
 ## Wiki
 
-* [How create mod for Modloader]()
+* [How create mod for Modloader](https://github.com/Farbigoz/BrawlhallaModloaderCore/wiki/How-Create-Mods)
 
 ## Examples
 
