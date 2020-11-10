@@ -1,4 +1,4 @@
-# Brawlhalla Modloader Core [![Python 3.6, 3.7, 3.8]]
+# Brawlhalla Modloader Core ![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 
 **Brawlhalla Modloader Core** - A tool for building, installing and uninstalling various modifications for Brawlhalla.
 
