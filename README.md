@@ -8,7 +8,7 @@
 
 ## Wiki
 
-* [How create mod for Modloader]()
+* [How create mod for Modloader](https://github.com/Farbigoz/BrawlhallaModloaderCore/wiki/How-Create-Mods)
 
 ## Examples
 
@@ -30,7 +30,7 @@ mod.build()
 ```python
 import core
 
-mod = Mod("ModFolderName")
+mod = core.Mod("ModFolderName")
 
 processor = core.Processor()
 processor.addModsToInstall(mod)
@@ -42,7 +42,7 @@ processor.process()
 ```python
 import core
 
-mod = Mod("ModFolderName")
+mod = core.Mod("ModFolderName")
 
 processor = core.Processor()
 processor.addModsToUninstall(mod)
