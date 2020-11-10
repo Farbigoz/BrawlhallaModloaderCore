@@ -1,0 +1,7 @@
+.vscode
+Mods
+test.py
+core/__pycache__
+core/utils/__pycache__
+core/libs/config_file/__pycache__
+core/libs/sqlite/__pycache__
