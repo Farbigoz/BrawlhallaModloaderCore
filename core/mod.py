@@ -431,18 +431,3 @@ class ModsFinder:
             self.mods.remove(mod)
 
 
-
-
-#md = Mod("ModFolderBlaBla")
-#print(md)
-#print(md.filesPack.files[0].repairOrig())
-
-
-#mb = ModBuilder("ModFolderBlaBla")
-#mb.setConfiguration("4.08", "Popa", "Fabriziog")
-
-#for l in mb.generator_build():
-#    print(l)
-
-#print(mb.build())
-
