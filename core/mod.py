@@ -326,8 +326,9 @@ class ModBuilder:
 
                     if strElType not in modifierElements:
                         modifierElements[strElType] = []
-                    modifierElements[strElType].append(elId)
+                    modifierElements[strElType].append(newElId)
 
+                elementSwf.save()
                 elementSwf.close()
 
             #Write scripts to .bmlmodifier

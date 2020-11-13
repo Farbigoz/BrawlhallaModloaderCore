@@ -114,6 +114,8 @@ class GameSwf(Swf, SwfUtils):
         super().save()
 
     def __backupElement(self, element, elId, newElId):
+        if element is None: return 
+        
         cloneElement = element.cloneTag()
         self.setElementId(cloneElement, newElId)
 

@@ -95,7 +95,10 @@ class FilesPack:
         
         self.modPath = modPath
         self.files = []
-        self.packZip = zipfile.ZipFile(os.path.join(self.modPath, FILES_PACK), "r") if not self.GHOST_MOD else None
+        if os.path.exists(os.path.join(self.modPath, FILES_PACK)):
+            self.packZip = zipfile.ZipFile(os.path.join(self.modPath, FILES_PACK), "r") if not self.GHOST_MOD else None
+        else:
+            self.packZip = None
 
     def addFile(self, fileName, filePath, fileHash):
         self.files.append(File(self.packZip, fileName, filePath, fileHash))
