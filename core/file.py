@@ -95,7 +95,7 @@ class FilesPack:
         
         self.modPath = modPath
         self.files = []
-        if os.path.exists(os.path.join(self.modPath, FILES_PACK)):
+        if modPath is not None and os.path.exists(os.path.join(self.modPath, FILES_PACK)):
             self.packZip = zipfile.ZipFile(os.path.join(self.modPath, FILES_PACK), "r") if not self.GHOST_MOD else None
         else:
             self.packZip = None

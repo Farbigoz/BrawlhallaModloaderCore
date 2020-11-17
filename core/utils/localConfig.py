@@ -28,6 +28,8 @@ from .. import ConfigFile, ConfigElement
 import os
 from sys import platform
 
+LOCAL_DATA_PATH = ""
+
 if platform in ["win32", "win64"]:
     LOCAL_DATA_PATH = os.path.join(os.getenv("APPDATA"), LOCAL_DATA_FOLDER)
 

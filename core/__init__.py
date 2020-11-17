@@ -43,6 +43,8 @@ def SetModsPath(path: str):
     MODS_PATH = path
     _CreateModFolder()
 
+_CreateModFolder()
+
 from .libs.sqlite import Sql
 from .libs.config_file import ConfigFile, ConfigElement
 from .utils import *

@@ -74,6 +74,19 @@ class ModifierTemplate:
     def jsonElements(self):
         return {ElementObjectToStr(elType):elements for elType, elements in self.elements.items()}
 
+    def findElementMatches(self, otherModifier):
+        otherModifier: ModifierTemplate = otherModifier
+        matches: List[int] = []
+
+        if self.swfName == otherModifier.swfName:
+            selfElementsList = [val for vals in self.elements.values() for val in vals]
+            otherElementsList = [val for vals in otherModifier.elements.values() for val in vals]
+
+            matches = list(set(selfElementsList) & set(otherElementsList))
+
+        return matches
+
+
 
 class Modifier(ModifierTemplate, Swf):
     def __init__(self, mod: object, swfName: str, elements: Dict[str, List[int]]=None):

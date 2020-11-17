@@ -97,6 +97,8 @@ class Mod:
     authorId: str
     platform: str
 
+    installed: bool
+
     def __init__(self, modFolder: str=None, modJson: dict=None):
         self.GHOST_MOD = bool(modJson)
 
@@ -143,6 +145,8 @@ class Mod:
                 #Load files
                 for file in index.read(MOD_TABLE_FILES):
                     self.filesPack.addFile(file[MOD_TABLE_FILES_NAME], file[MOD_TABLE_FILES_PATH], file[MOD_TABLE_FILES_HASH])
+
+        self.installed = self.modHash in ModsConfig.InstalledMods
 
     def loadConfig(self, config):
         for key, value in config.items():
@@ -397,14 +401,18 @@ class ModBuilder:
 
 
 
-class ModsFinder:
+class _ModsFinder:
     mods: List[Mod]
     modsMap: Dict[str, Mod]
 
     def __init__(self):
         self.mods = []
         self.modsMap = {}
-        self()
+        self.__call__()
+
+    def __iter__(self) -> Mod:
+        for mod in self.mods:
+            yield mod
 
     def __call__(self):
         for folder in os.listdir(MODS_PATH):
@@ -431,4 +439,19 @@ class ModsFinder:
             mod = self.modsMap.pop(self.modsMap)
             self.mods.remove(mod)
 
+    def refind(self):
+        self.__call__()
 
+    def findByJson(self, modJson):
+        for mod in self.mods:
+            if mod.modHash == modJson[MOD_TABLE_CONFIGURATION]["modHash"]:
+                return mod
+
+    def findByHash(self, modHash):
+        for mod in self.mods:
+            if mod.modHash == modHash:
+                return mod
+
+
+
+ModsFinder = _ModsFinder()

@@ -195,11 +195,18 @@ class Processor:
             gameSwf.load()
 
             #Uninstaller
-            for modifier in [
-                                modifier
-                                for modifier in self.modifiersToUninstall.get(swfName, [])
-                                if modifier.modHash in gameSwf.installedMods
-                            ]:
+            for modifier in set([
+                                *[  
+                                    modifier
+                                    for modifier in self.modifiersToUninstall.get(swfName, [])
+                                    if modifier.modHash in gameSwf.installedMods
+                                ],
+                                *[
+                                    modifier
+                                    for modifier in self.modifiersToInstall[swfName]
+                                    if modifier.modHash in gameSwf.installedMods
+                                ]
+                            ]):
                 self.uninstallModifier(modifier)
 
                 yield UninstalledModifierFlag, modifier
