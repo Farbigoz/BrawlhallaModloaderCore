@@ -146,12 +146,19 @@ class Mod:
                 for file in index.read(MOD_TABLE_FILES):
                     self.filesPack.addFile(file[MOD_TABLE_FILES_NAME], file[MOD_TABLE_FILES_PATH], file[MOD_TABLE_FILES_HASH])
 
-        self.installed = self.modHash in ModsConfig.InstalledMods
+        #self.installed = self.modHash in ModsConfig.InstalledMods
+    @property
+    def installed(self):
+        return self.modHash in ModsConfig.InstalledMods
 
     def loadConfig(self, config):
         for key, value in config.items():
             if key == "modTags" and not self.GHOST_MOD:
                 setattr(self, key, json.loads(config["modTags"]))
+            elif key == "modPreview" and self.GHOST_MOD:
+                setattr(self, key, "")
+            elif key == "modPreview" and value:
+                setattr(self, key, os.path.join(self.modPath, value))
             else:
                 setattr(self, key, value)
 

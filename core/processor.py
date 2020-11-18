@@ -207,7 +207,7 @@ class Processor:
                                     if modifier.modHash in gameSwf.installedMods
                                 ]
                             ]):
-                self.uninstallModifier(modifier)
+                self.uninstallModifier(gameSwf, modifier)
 
                 yield UninstalledModifierFlag, modifier
 
@@ -259,8 +259,14 @@ class Processor:
 
                 yield UninstalledFileFlag, file
 
-        installedModsHashes = list(set([modifier.modHash for modifiers in self.modifiersToInstall.values() for modifier in modifiers]))
-        ModsConfig.InstalledMods = [modHash for modHash in installedModsHashes]
+        uninstalledModsHashes = set([modifier.modHash for modifiers in self.modifiersToUninstall.values() for modifier in modifiers])
+        installedModsHashes = set([modifier.modHash for modifiers in self.modifiersToInstall.values() for modifier in modifiers])
+        ModsConfig.InstalledMods = list(( set(ModsConfig.InstalledMods) - uninstalledModsHashes ) | installedModsHashes)
+
+        self.modifiersToInstall = {}
+        self.filesPacksToInstall = []
+        self.modifiersToUninstall = {}
+        self.filesPacksToUninstall = []
 
 
     def process(self, generator=False):
