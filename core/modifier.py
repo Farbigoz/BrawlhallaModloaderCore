@@ -23,7 +23,7 @@
 #
 # *****************************************************************************
 
-import os, json
+import os
 from typing import Dict, List
 from .utils.imports import FILLSTYLE, DefineShapeTags
 from .utils.swf import Swf, SwfCreator
@@ -78,7 +78,7 @@ class ModifierTemplate:
         otherModifier: ModifierTemplate = otherModifier
         matches: List[int] = []
 
-        if self.swfName == otherModifier.swfName:
+        if self.swfName == otherModifier.swfName and self != otherModifier:
             selfElementsList = [val for vals in self.elements.values() for val in vals]
             otherElementsList = [val for vals in otherModifier.elements.values() for val in vals]
 

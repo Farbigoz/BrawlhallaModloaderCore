@@ -90,7 +90,7 @@ class FilesPack:
 
     GHOST_MOD: bool
 
-    def __init__(self, modPath=None):
+    def __init__(self, modPath=None, modHash=None):
         self.GHOST_MOD = not bool(modPath)
         
         self.modPath = modPath
@@ -106,3 +106,9 @@ class FilesPack:
     def __iter__(self) -> File:
         for file in self.files:
             yield file
+
+    def findFilesMatches(self, otherFilesPack):
+        if self == otherFilesPack:
+            return []
+        else:
+            return list(set([file.fileName for file in self.files]) & set([file.fileName for file in otherFilesPack.files]))

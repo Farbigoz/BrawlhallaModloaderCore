@@ -23,22 +23,20 @@
 #
 # *****************************************************************************
 
-import os
-
 from .utils.imports import *
 from .utils.elementTypes import ElementAnyToObject
-from .utils.gameconstants import BRAWLHALLA_SWFS
 from .utils.localConfig import ModsConfig
 
-from .file import FilesPack, File
+from .file import File
 from .modifier import ModifierTemplate, Modifier
-from .mod import Mod
+from .mod import Mod, ModsFinder
 from .gameswf import GameSwf, GAME_SWF_IMAGES_START, GAME_SWF_IMAGES_END
 
 from typing import Dict, List, Union, Tuple
 
 
-
+class OpenGameSwfFlag:
+    pass
 class InstalledModifierFlag:
     pass
 class InstalledFileFlag:
@@ -47,12 +45,11 @@ class UninstalledModifierFlag:
     pass
 class UninstalledFileFlag:
     pass
+class DoneFlag:
+    pass
 
 
 class Processor:
-    files: List[str]
-    modifiersElements: Dict[str, List[int]]
-
     modifiersToInstall: Dict[str, List[ModifierTemplate]]
     filesPacksToInstall: list
     modifiersToUninstall: dict
@@ -61,15 +58,12 @@ class Processor:
     conflictMods: list
 
     def __init__(self):
-        self.modifiersElements = {}
-        self.files = []
-
         self.modifiersToInstall = {}
         self.filesPacksToInstall = []
         self.modifiersToUninstall = {}
         self.filesPacksToUninstall = []
 
-        self.conflictMods = []
+        self.conflictMods = {} #{InstalledMod: NewMod} 
 
 
     def addModsToInstall(self, *mods):
@@ -81,28 +75,41 @@ class Processor:
             for modifier in mod.modifierList:
                 if modifier.swfName not in self.modifiersToInstall:
                     self.modifiersToInstall[modifier.swfName] = []
-                    self.modifiersElements[modifier.swfName] = []
+
+                for otherModifier in self.modifiersToInstall.get(modifier.swfName, []):
+                    if modifier.findElementMatches(otherModifier):
+                        otherMod = ModsFinder.findByHash(otherModifier.modHash)
+                        if otherMod not in self.conflictMods.get(mod, []):
+                            self.conflictMods[mod] = [*self.conflictMods.get(mod, []), otherMod]
+
+                for otherMod in ModsFinder:
+                    if not otherMod.installed: continue 
+
+                    for otherModifier in otherMod.modifierList:
+                        if modifier.findElementMatches(otherModifier):
+                            if otherMod not in self.conflictMods.get(mod, []):
+                                self.conflictMods[mod] = [*self.conflictMods.get(mod, []), otherMod]
 
                 self.modifiersToInstall[modifier.swfName].append(modifier)
                 if modifier in self.modifiersToUninstall.get(modifier.swfName, {}):
                     self.modifiersToUninstall[modifier.swfName].remove(modifier)
 
-                modifierElements = [element for elements in modifier.elements.values() for element in elements]
 
-                if set(modifierElements) & set(self.modifiersElements[modifier.swfName]):
-                    self.conflictMods.append(mod)
-                    
-                self.modifiersElements[modifier.swfName] += modifierElements
+            for otherFilesPack in self.filesPacksToInstall:
+                if mod.filesPack.findFilesMatches(otherFilesPack):
+                    otherMod =  ModsFinder.findByHash(otherFilesPack.modHash)
+                    if otherMod not in self.conflictMods.get(mod, []):
+                        self.conflictMods[mod] = [*self.conflictMods.get(mod, []), otherMod]
+
+            for otherMod in ModsFinder:
+                if not otherMod.installed: continue 
+                
+                if mod.filesPack.findFilesMatches(otherMod.filesPack):
+                    if otherMod not in self.conflictMods.get(mod, []):
+                        self.conflictMods[mod] = [*self.conflictMods.get(mod, []), otherMod]
 
             self.filesPacksToInstall.append(mod.filesPack)
-
-
-            files = [file.fileName for file in mod.filesPack]
-
-            if set(files) & set(self.files):
-                self.conflictMods.append(mod)
-
-            self.files += files
+            
 
 
     def addModsToUninstall(self, *mods):
@@ -189,8 +196,19 @@ class Processor:
         gameSwf.installedMods.remove(modifier.modHash)
 
 
+    def getStepNum(self):
+        n = 0
+        n += len([modifier for modifier in self.modifiersToInstall.values()])
+        n += len([modifier for modifier in self.modifiersToUninstall.values()])
+        n += len([file for filePack in self.filesPacksToInstall for file in filePack])
+        n += len([file for filePack in self.filesPacksToUninstall for file in filePack])
+        return n
+
+
     def _process(self) -> Tuple[Union[InstalledModifierFlag, InstalledFileFlag, UninstalledModifierFlag, UninstalledFileFlag], Union[ModifierTemplate, File]]:
         for swfName in self.modifiersToInstall:
+            yield OpenGameSwfFlag, swfName
+
             gameSwf = GameSwf(swfName)
             gameSwf.load()
 
@@ -207,9 +225,11 @@ class Processor:
                                     if modifier.modHash in gameSwf.installedMods
                                 ]
                             ]):
+                yield UninstalledModifierFlag, modifier
+
                 self.uninstallModifier(gameSwf, modifier)
 
-                yield UninstalledModifierFlag, modifier
+                yield DoneFlag, 
 
 
             #Installer
@@ -218,9 +238,11 @@ class Processor:
                                 for modifier in self.modifiersToInstall[swfName]
                                 if modifier.modHash not in gameSwf.installedMods
                             ]:
+                yield InstalledModifierFlag, modifier
+
                 self.installModifier(gameSwf, modifier)
 
-                yield InstalledModifierFlag, modifier
+                yield DoneFlag, 
 
             gameSwf.save()
             gameSwf.close()
@@ -228,6 +250,8 @@ class Processor:
 
 
         for swfName in self.modifiersToUninstall:
+            yield OpenGameSwfFlag, swfName
+            
             gameSwf = GameSwf(swfName)
             gameSwf.load()
 
@@ -237,9 +261,11 @@ class Processor:
                                 for modifier in self.modifiersToUninstall[swfName]
                                 if modifier.modHash in gameSwf.installedMods
                             ]:
+                yield UninstalledModifierFlag, modifier
+
                 self.uninstallModifier(gameSwf, modifier)
 
-                yield UninstalledModifierFlag, modifier
+                yield DoneFlag, 
 
 
             gameSwf.save()
@@ -249,15 +275,19 @@ class Processor:
 
         for filePack in self.filesPacksToInstall:
             for file in filePack:
+                yield InstalledFileFlag, file
+
                 file.place()
 
-                yield InstalledFileFlag, file
+                yield DoneFlag, 
 
         for filePack in self.filesPacksToUninstall:
             for file in filePack:
+                yield UninstalledFileFlag, file
+                
                 file.repair()
 
-                yield UninstalledFileFlag, file
+                yield DoneFlag, 
 
         uninstalledModsHashes = set([modifier.modHash for modifiers in self.modifiersToUninstall.values() for modifier in modifiers])
         installedModsHashes = set([modifier.modHash for modifiers in self.modifiersToInstall.values() for modifier in modifiers])
@@ -267,6 +297,7 @@ class Processor:
         self.filesPacksToInstall = []
         self.modifiersToUninstall = {}
         self.filesPacksToUninstall = []
+        self.conflictMods = {} #{InstalledMod: NewMod} 
 
 
     def process(self, generator=False):

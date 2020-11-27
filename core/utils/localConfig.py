@@ -36,6 +36,11 @@ if platform in ["win32", "win64"]:
     if LOCAL_DATA_FOLDER not in os.listdir(os.getenv("APPDATA")):
         os.mkdir(LOCAL_DATA_PATH)
 
+elif platform == "darwin":
+    LOCAL_DATA_PATH = os.path.join(os.getcwd(), "appconfig")
+
+    if "appconfig" not in os.listdir(os.getcwd()):
+        os.mkdir(LOCAL_DATA_PATH)
 
 
 
@@ -44,6 +49,33 @@ CoreConfigFile = "core.cfg"
 class CoreConfigMap(ConfigFile):
     BrawlhallaAirHash = ConfigElement()
     BrawlhallaVersion = ConfigElement()
+
+    BrawlhallaIgnoredPaths = ConfigElement(default=[])
+    BrawlhallaAllowedPaths = ConfigElement(default=[])
+
+
+    def addBrawlhallaIgnoredPath(self, path: str):
+        if path.endswith("Brawlhalla.exe"):
+            path = path.replace("Brawlhalla.exe", "", 1)
+        if path.endswith("\\") or path.endswith("/"):
+            path = path[:-1]
+
+        self.BrawlhallaIgnoredPaths = list(set([*self.BrawlhallaIgnoredPaths, path]))
+
+    def removeBrawlhallaIgnoredPath(self, path: str):
+        self.BrawlhallaIgnoredPaths = [p for p in self.BrawlhallaIgnoredPaths if p != path]
+
+    def addBrawlhallaAllowedPath(self, path: str):
+        if path.endswith("Brawlhalla.exe"):
+            path = path.replace("Brawlhalla.exe", "", 1)
+        if path.endswith("\\") or path.endswith("/"):
+            path = path[:-1]
+
+        self.BrawlhallaAllowedPaths = list(set([*self.BrawlhallaAllowedPaths, path]))
+
+    def removeBrawlhallaAllowedPath(self, path: str):
+        self.BrawlhallaAllowedPaths = [p for p in self.BrawlhallaAllowedPaths if p != path]
+
 
 
 CoreConfig = CoreConfigMap(os.path.join(LOCAL_DATA_PATH, CoreConfigFile))

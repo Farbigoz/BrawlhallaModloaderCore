@@ -38,7 +38,7 @@ if platform in ["win32", "win64"]:
     import winreg
 
     def SearchBrawlhallaHome():
-        steamFolders = []
+        brawlhallaFolders = []
         steampath = ""
 
         for reg in ["SOFTWARE\\WOW6432Node\\Valve\\Steam", "SOFTWARE\\Valve\\Steam"]:
@@ -58,25 +58,30 @@ if platform in ["win32", "win64"]:
         if not steampath:
             return None
 
-        steamFolders.append(os.path.join(steampath, "steamapps"))
-        
-        with open(os.path.join(steamFolders[0], "libraryfolders.vdf")) as vdf:
-            for line in vdf.read().split("{")[1].split("}")[0].strip().split("\n"):
-                find = re.findall(r'"(\d+)"\t\t"([^"]+)"', line.strip())
-                if find: steamFolders.append(os.path.join(find[0][1].replace("\\\\", "\\"), "steamapps"))
+        with open(os.path.join(os.path.join(steampath, "steamapps"), "libraryfolders.vdf")) as vdf:
+            for line in [
+                            *vdf.read().split("{")[1].split("}")[0].strip().split("\n"),
+                            f'"0"\t\t"{steampath}"'
+                        ]:
 
-        for folder in steamFolders:
-            if (
-                    "common" in os.listdir(folder) 
-                    and 
-                    "Brawlhalla" in os.listdir(os.path.join(folder, "common"))
-                    and
-                    "Brawlhalla.exe" in os.listdir(os.path.join(folder, "common", "Brawlhalla"))
-                ):
+                find = re.findall(r'"\d*"\t\t"([^"]*)"', line.strip())
 
-                return os.path.join(folder, "common", "Brawlhalla")
+                if find: 
+                    folder = os.path.join(find[0].replace("\\\\", "\\"), "steamapps")
+                    if "common" in os.listdir(folder) and "Brawlhalla" in os.listdir(os.path.join(folder, "common")):
+                        brawlhallaFolders.append(os.path.join(folder, "common", "Brawlhalla"))
 
-        return None
+        brawlhallaFolders = list(set([*brawlhallaFolders, *CoreConfig.BrawlhallaAllowedPaths]))
+
+        found = []
+        for folder in brawlhallaFolders:
+            if os.path.exists(folder) and "Brawlhalla.exe" in os.listdir(folder) and "BrawlhallaAir.swf" in os.listdir(folder):
+                if folder in CoreConfig.BrawlhallaIgnoredPaths:
+                    continue
+
+                found.append(folder)
+
+        return None if found == [] else (found[0] if len(found) == 1 else found)
 
 elif platform == "darwin":
     def SearchBrawlhallaHome():
@@ -105,7 +110,7 @@ def SearchBrawlhallaSwfs(brawlhallaPath: str):
 
     return brawlhallaSwfs
 
-BRAWLHALLA_SWFS = SearchBrawlhallaSwfs(BRAWLHALLA_PATH)
+BRAWLHALLA_SWFS = SearchBrawlhallaSwfs(BRAWLHALLA_PATH) if isinstance(BRAWLHALLA_PATH, str) else None
 
 
 def SearchBrawlhallaFiles(brawlhallaPath: str):
@@ -122,7 +127,7 @@ def SearchBrawlhallaFiles(brawlhallaPath: str):
 
     return brawlhallaFiles
 
-BRAWLHALLA_FILES = SearchBrawlhallaFiles(BRAWLHALLA_PATH)
+BRAWLHALLA_FILES = SearchBrawlhallaFiles(BRAWLHALLA_PATH) if isinstance(BRAWLHALLA_PATH, str) else None
 
 
 def SearchBrawlhallaVersion(brawlhallaAirPath: str):
@@ -160,4 +165,4 @@ def SearchBrawlhallaVersion(brawlhallaAirPath: str):
 
     return CoreConfig.BrawlhallaVersion
 
-BRAWLHALLA_VERSION = SearchBrawlhallaVersion(BRAWLHALLA_SWFS["BrawlhallaAir.swf"]) if BRAWLHALLA_SWFS else None
+BRAWLHALLA_VERSION = SearchBrawlhallaVersion(BRAWLHALLA_SWFS["BrawlhallaAir.swf"]) if isinstance(BRAWLHALLA_PATH, str) else None

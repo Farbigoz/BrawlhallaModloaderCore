@@ -24,12 +24,21 @@
 # *****************************************************************************
 
 import jpype, os
+from sys import platform
 from jpype import JClass, JString, JInt
 
 FFDEC_LIB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "libs/ffdec_lib.jar"))
 
+#/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/
+
 # Run JVM
-jpype.startJVM(classpath=[FFDEC_LIB_PATH])
+try:
+    jpype.startJVM(classpath=[FFDEC_LIB_PATH])
+except:
+    if platform == "darwin":
+        jvmpath = "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jli/libjli.dylib"
+        jpype.startJVM(jvmpath=jvmpath, classpath=[FFDEC_LIB_PATH])
+        
 
 # Java
 ArrayList = JClass('java.util.ArrayList')

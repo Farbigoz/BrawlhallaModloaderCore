@@ -23,14 +23,14 @@
 #
 # *****************************************************************************
 
-import os, json, hashlib, time, zipfile
+import json, hashlib, time, zipfile
 from typing import List, Dict
 from . import MODS_PATH
 from . import Sql
 from .utils.localConfig import ModsConfig
 from .utils.exceptions import ModResourcesNotFound, ModFolderDoesNotExist, ModNotBuilded, ModifierDoesNotExist
 from .utils.imports import *
-from .utils.elementTypes import ElementStrToObject, ElementObjectToStr, ElementAnyToStr
+from .utils.elementTypes import ElementObjectToStr
 from .utils.gameconstants import BRAWLHALLA_PATH, BRAWLHALLA_SWFS, BRAWLHALLA_FILES
 from .utils.swf import Swf
 from .modifier import MODIFIER_FORMAT, Modifier, ModifierTemplate, ModifierCreator
@@ -107,16 +107,16 @@ class Mod:
             self.modFolder = None
 
             self.modifierList = []
-            self.filesPack = FilesPack(None)
 
             self.loadConfig(modJson[MOD_TABLE_CONFIGURATION])
 
             for modifier in modJson[MOD_TABLE_MODIFIER]:
                 self.modifierList.append(ModifierTemplate(mod=self, swfName=modifier[MOD_TABLE_MODIFIER_NAME], elements=modifier[MOD_TABLE_MODIFIER_ELEMENTS]))
-                self.filesPack = FilesPack(None)
+            
+            self.filesPack = FilesPack(None, self.modHash)
 
             for file in modJson[MOD_TABLE_FILES]:
-                    self.filesPack.addFile(file[MOD_TABLE_FILES_NAME], file[MOD_TABLE_FILES_PATH], file[MOD_TABLE_FILES_HASH])
+                self.filesPack.addFile(file[MOD_TABLE_FILES_NAME], file[MOD_TABLE_FILES_PATH], file[MOD_TABLE_FILES_HASH])
 
         else:
             self.modPath = os.path.join(MODS_PATH, modFolder)
@@ -129,7 +129,6 @@ class Mod:
                 raise ModNotBuilded(f"Mod '{modFolder}' not builded")
 
             self.modifierList = []
-            self.filesPack = FilesPack(self.modPath)
 
             #Open index.db
             with Sql(os.path.join(self.modPath, MOD_DATABASE_FILE)) as index:
@@ -141,6 +140,8 @@ class Mod:
                         raise ModifierDoesNotExist(f"Modifier '{modifier[MOD_TABLE_MODIFIER_NAME]}.{MODIFIER_FORMAT}' doesn't exist")
 
                     self.modifierList.append(Modifier(self, modifier[MOD_TABLE_MODIFIER_NAME], json.loads(modifier[MOD_TABLE_MODIFIER_ELEMENTS])))
+
+                self.filesPack = FilesPack(self.modPath, self.modHash)
 
                 #Load files
                 for file in index.read(MOD_TABLE_FILES):
@@ -415,6 +416,7 @@ class _ModsFinder:
     def __init__(self):
         self.mods = []
         self.modsMap = {}
+        self.errors = []
         self.__call__()
 
     def __iter__(self) -> Mod:
@@ -433,6 +435,9 @@ class _ModsFinder:
 
             except ModNotBuilded:
                 pass
+            except:
+                self.errors.append(f"Mod loading error '{folder}'")
+
 
         for modHash, modJson in ModsConfig.JsonMods.items():
             if modHash in self.modsMap: continue

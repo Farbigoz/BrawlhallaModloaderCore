@@ -52,3 +52,14 @@ from .file import *
 from .modifier import *
 from .mod import *
 from .processor import Processor
+
+def RefindBrawlhalla():
+    global BRAWLHALLA_PATH
+    global BRAWLHALLA_SWFS
+    global BRAWLHALLA_FILES
+    global BRAWLHALLA_VERSION
+
+    BRAWLHALLA_PATH = gameconstants.SearchBrawlhallaHome()
+    BRAWLHALLA_SWFS = gameconstants.SearchBrawlhallaSwfs(BRAWLHALLA_PATH) if isinstance(BRAWLHALLA_PATH, str) else None
+    BRAWLHALLA_FILES = gameconstants.SearchBrawlhallaFiles(BRAWLHALLA_PATH) if isinstance(BRAWLHALLA_PATH, str) else None
+    BRAWLHALLA_VERSION = gameconstants.SearchBrawlhallaVersion(BRAWLHALLA_SWFS["BrawlhallaAir.swf"]) if isinstance(BRAWLHALLA_PATH, str) else None
