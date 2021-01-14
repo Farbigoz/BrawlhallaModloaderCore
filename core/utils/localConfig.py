@@ -23,11 +23,11 @@
 #
 # *****************************************************************************
 
-from .. import LOCAL_DATA_FOLDER
 from .. import ConfigFile, ConfigElement
 import os
 from sys import platform
 
+LOCAL_DATA_FOLDER = "BrawlhallaModloader"
 LOCAL_DATA_PATH = ""
 
 if platform in ["win32", "win64"]:

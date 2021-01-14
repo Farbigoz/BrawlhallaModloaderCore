@@ -27,13 +27,12 @@ __author__ = "Farbigoz"
 __version__ = "0.1"
 
 
-
-
-LOCAL_DATA_FOLDER = "BrawlhallaModloader"
 MODS_PATH = "Mods"
 
-import os
+
 def _CreateModFolder():
+    import os
+
     global MODS_PATH
     if not os.path.exists(MODS_PATH):
         os.makedirs(MODS_PATH)

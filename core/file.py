@@ -23,8 +23,12 @@
 #
 # *****************************************************************************
 
-import os, zipfile, shutil, hashlib
+import os
+import zipfile
+import shutil 
+import hashlib
 from typing import List
+
 from .utils.gameconstants import BRAWLHALLA_PATH, BRAWLHALLA_FILES
 from .utils.localConfig import LOCAL_DATA_PATH, ModsConfig
 
@@ -55,30 +59,34 @@ class File:
         if self.GHOST_MOD: return
 
         with open(BRAWLHALLA_FILES[self.fileName], "rb") as file:
-            fileHash = hashlib.sha256(file.read()).hexdigest()[:16]
+            origFileHash = hashlib.sha256(file.read()).hexdigest()[:16]
 
         #Если файл ниразу небыл сдамплен
         if self.fileName not in ModsConfig.OriginalFiles:
-            self.dump(fileHash)
+            self.dump(origFileHash)
 
         #Если файл был обновлён
-        if self.fileName in ModsConfig.ModifiedFiles and ModsConfig.ModifiedFiles[self.fileName] != fileHash:
-            self.dump(fileHash)
+        if self.fileName in ModsConfig.ModifiedFiles and ModsConfig.ModifiedFiles[self.fileName] != origFileHash:
+            self.dump(origFileHash)
 
         ModsConfig.ModifiedFiles = {**ModsConfig.ModifiedFiles, self.fileName:self.fileHash}
         self.packZip.extract(self.filePath.replace("\\", "/"), BRAWLHALLA_PATH)
 
-    def dump(self, fileHash=None):
-        if fileHash is None:
+    def dump(self, origFileHash=None):
+        if origFileHash is None:
             with open(BRAWLHALLA_FILES[self.fileName], "rb") as file:
-                fileHash = hashlib.sha256(file.read()).hexdigest()[:16]
+                origFileHash = hashlib.sha256(file.read()).hexdigest()[:16]
 
         shutil.copyfile(BRAWLHALLA_FILES[self.fileName], os.path.join(FILES_DUMP_FOLDER, self.fileName))
-        ModsConfig.OriginalFiles = {**ModsConfig.OriginalFiles, self.fileName: fileHash}
+        ModsConfig.OriginalFiles = {**ModsConfig.OriginalFiles, self.fileName: origFileHash}
 
     def repair(self):
-        shutil.copyfile(os.path.join(FILES_DUMP_FOLDER, self.fileName), BRAWLHALLA_FILES[self.fileName])
-        ModsConfig.ModifiedFiles = {**ModsConfig.ModifiedFiles, self.fileName:ModsConfig.OriginalFiles[self.fileName]}
+        with open(BRAWLHALLA_FILES[self.fileName], "rb") as file:
+            origFileHash = hashlib.sha256(file.read()).hexdigest()[:16]
+
+        if origFileHash == self.fileHash:
+            shutil.copyfile(os.path.join(FILES_DUMP_FOLDER, self.fileName), BRAWLHALLA_FILES[self.fileName])
+            ModsConfig.ModifiedFiles = {**ModsConfig.ModifiedFiles, self.fileName: ModsConfig.OriginalFiles[self.fileName]}
 
     def __repr__(self):
         return f"<File: {self.fileName}>"
@@ -92,8 +100,9 @@ class FilesPack:
 
     def __init__(self, modPath=None, modHash=None):
         self.GHOST_MOD = not bool(modPath)
-        
+
         self.modPath = modPath
+        self.modHash = modHash
         self.files = []
         if modPath is not None and os.path.exists(os.path.join(self.modPath, FILES_PACK)):
             self.packZip = zipfile.ZipFile(os.path.join(self.modPath, FILES_PACK), "r") if not self.GHOST_MOD else None

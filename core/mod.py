@@ -23,8 +23,12 @@
 #
 # *****************************************************************************
 
-import json, hashlib, time, zipfile
+import json
+import hashlib
+import time
+import zipfile
 from typing import List, Dict
+
 from . import MODS_PATH
 from . import Sql
 from .utils.localConfig import ModsConfig
@@ -91,7 +95,7 @@ class Mod:
     modVersion: str
     modDescription: str
     modTags: list
-    modPreview: str
+    modPreview: list
     modId: str
     modHash: str
     authorId: str
@@ -155,11 +159,13 @@ class Mod:
     def loadConfig(self, config):
         for key, value in config.items():
             if key == "modTags" and not self.GHOST_MOD:
-                setattr(self, key, json.loads(config["modTags"]))
+                setattr(self, key, json.loads(value))
             elif key == "modPreview" and self.GHOST_MOD:
                 setattr(self, key, "")
             elif key == "modPreview" and value:
-                setattr(self, key, os.path.join(self.modPath, value))
+                self.modPreview = []
+                for preview in json.loads(value):
+                    self.modPreview.append(os.path.join(self.modPath, preview))
             else:
                 setattr(self, key, value)
 
@@ -181,7 +187,7 @@ class Mod:
                 "modVersion": self.modVersion,
                 "modDescription": self.modDescription,
                 "modTags": self.modTags,
-                "modPreview": None,
+                "modPreview": [],
                 "modId": self.modId,
                 "modHash": self.modHash,
                 "authorId": self.authorId,
@@ -248,7 +254,7 @@ class ModBuilder:
                             modVersion: str="0.1", 
                             modDescription: str=None, 
                             modTags: List[str]=[],
-                            modPreview: str=None,
+                            modPreview: list=None,
                             modId: str=None,
                             authorId: str=None,
                             platform: int=0
@@ -261,7 +267,7 @@ class ModBuilder:
             "modVersion": modVersion,
             "modDescription": modDescription,
             "modTags": json.dumps(modTags),
-            "modPreview": modPreview,
+            "modPreview": json.dumps(modPreview),
             "modId": modId,
             "authorId": authorId,
             "platform": PLATFORMS[platform]

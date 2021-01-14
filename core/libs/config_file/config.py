@@ -6,6 +6,7 @@ _type = type
 
 END_STRING = ";\t\n"
 
+
 class ConfigFileMeta(type):
     def __new__(metacls, cls, bases, classdict):
         if bases:
@@ -18,6 +19,14 @@ class ConfigFileMeta(type):
 
                 elif element == ConfigElement:
                     element = element()
+                    classdict["_elements"][name] = element
+                    classdict[name] = element
+                    element.name = name
+
+                elif type(element) in [int, str, list, dict] and \
+                        name not in ["__module__", "__qualname__", "_elements"]:
+
+                    element = ConfigElement(default=element)
                     classdict["_elements"][name] = element
                     classdict[name] = element
                     element.name = name
@@ -36,23 +45,25 @@ class ConfigFile(metaclass=ConfigFileMeta):
         dict: "dict",
     }
 
-    str_to_type = {v:k for k,v in type_to_str.items()}
+    str_to_type = {v: k for k, v in type_to_str.items()}
 
     def __init__(self, path):
         self._path = path
 
-        #Create .cfg file
+        # Create .cfg file
         if not os.path.exists(self._path):
             open(self._path, "w").close()
 
         new_elements = False
 
-        #Load config by ConfigElements on child class
+        # Load config by ConfigElements on child class
         with open(self._path, "r") as cfg:
             cfgContent = cfg.read()
 
             for element in self._elements.values():
-                _attr = re.findall(f' *?{element.name} *?\[ *?({self.type_to_str[element.type]}) *?\][ =]*(.*){END_STRING}', cfgContent)
+                _attr = re.findall(
+                    f' *?{element.name} *?\[ *?({self.type_to_str[element.type]}) *?\][ =]*(.*){END_STRING}',
+                    cfgContent)
 
                 if _attr:
                     attr_type = self.str_to_type[_attr[0][0]]
@@ -109,7 +120,7 @@ class ConfigFile(metaclass=ConfigFileMeta):
                 element.attr = value
                 self._write_all()
 
-        #elif not key.startswith("_"):
+        # elif not key.startswith("_"):
         #    if key not in self._elements:
         #        self._elements[key] = ConfigElement(key, value)
         #        super().__setattr__(key, self._elements[key])
@@ -137,7 +148,7 @@ class ConfigFile(metaclass=ConfigFileMeta):
 
 
 class ConfigElement:
-    def __init__(self, name: str=None, default=None, type: Union[int, str, list, dict]=str):
+    def __init__(self, name: str = None, default=None, type: Union[int, str, list, dict] = str):
         self.name = None if name is None else re.sub('[^A-Za-z0-9_]', '', name)
         self.type = _type(default) if default is not None else type
         self.attr = default
